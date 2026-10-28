@@ -109,9 +109,20 @@ jobs:
           path: wheelhouse
       - name: Install and import on Alpine (like Home Assistant)
         run: |
-          docker run --rm -v "$PWD/wheelhouse":/w python:${{ matrix.py }}-alpine sh -euxc '
-            pip install --no-index --find-links /w stefano-ntgcalls
-            python -c "import ntgcalls; print(\"ntgcalls OK\")"'
+          docker run --rm -i -v "$PWD/wheelhouse":/w python:${{ matrix.py }}-alpine sh -eux <<'EOF'
+          pip install --no-index --find-links /w stefano-ntgcalls
+          apk add --no-cache binutils >/dev/null
+          SO=$(ls /usr/local/lib/python3.*/site-packages/ntgcalls*.so)
+          nm -D --undefined-only "$SO" | awk '{print $NF}' | sed 's/@.*//' | sort -u > /tmp/need
+          { nm -D /lib/ld-musl-*.so.1 | awk '$2 ~ /[TWDBVi]/ {print $3}'
+            for l in $(ldd "$SO" 2>/dev/null | awk '/=>/ {print $3}'); do
+              nm -D "$l" 2>/dev/null | awk '$2 ~ /[TWDBVi]/ {print $3}'
+            done; } | sort -u > /tmp/have
+          echo "===== MISSING SYMBOLS ====="
+          comm -23 /tmp/need /tmp/have | grep -v '^Py\|^_Py' || true
+          echo "==========================="
+          python -c "import ntgcalls; print('ntgcalls OK')"
+          EOF
 
   publish:
     needs: test
