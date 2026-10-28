@@ -1,6 +1,6 @@
 [project]
 dynamic = ["version"]
-name = "ntgcalls"
+name = "stefano-ntgcalls"
 description = "A Native Implementation of Telegram Calls in a seamless way."
 readme = "README.md"
 license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
@@ -33,7 +33,7 @@ build-backend = "setuptools.build_meta"
 
 [project.urls]
 Homepage = "https://pytgcalls.github.io/"
-Repository = "https://github.com/pytgcalls/ntgcalls.git"
+Repository = "https://github.com/Sanji78/stefano-ntgcalls.git"
 Documentation = "https://pytgcalls.github.io/NTgCalls"
 Changelog = "https://pytgcalls.github.io/PyTgCalls/Changelogs"
 
