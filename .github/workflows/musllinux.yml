@@ -76,7 +76,8 @@ jobs:
                 echo "GCC_DIR=$GCC_DIR"; ls "$GCC_DIR" | head
                 export CFLAGS="--gcc-install-dir=$GCC_DIR"
                 export CXXFLAGS="--gcc-install-dir=$GCC_DIR -D_LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE"
-                export LDFLAGS="--gcc-install-dir=$GCC_DIR"
+                clang -O2 -fPIC -c musl/glibc_shim.c -o /tmp/glibc_shim.o
+                export LDFLAGS="--gcc-install-dir=$GCC_DIR /tmp/glibc_shim.o"
                 rm -rf build
                 $PYBIN -m pip wheel . --no-build-isolation --no-deps -v -w dist_raw
                 $PYBIN -m auditwheel repair dist_raw/*-$PY-*.whl -w wheelhouse
