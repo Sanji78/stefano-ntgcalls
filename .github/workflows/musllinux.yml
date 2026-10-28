@@ -53,32 +53,31 @@ jobs:
           - { name: arm64,  runner: ubuntu-24.04-arm }
     runs-on: ${{ matrix.arch.runner }}
     timeout-minutes: 360
-    container:
-      image: ghcr.io/sanji78/stefano-ntgcalls/muslinux-${{ matrix.arch.name }}:latest
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Git safe directory
-        run: git config --global --add safe.directory '*'
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Build wheels (cp313, cp314)
-        shell: bash
-        env:
-          PYPI_TAGS: '1'
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build wheels (cp313, cp314) inside musl image
         run: |
-          set -euxo pipefail
-          for PY in cp313-cp313 cp314-cp314; do
-            PYBIN=/opt/python/$PY/bin/python
-            $PYBIN -m pip install -U pip setuptools wheel cmake ninja auditwheel
-            export PATH="$(dirname $PYBIN):$PATH"
-            $PYBIN -m pip wheel . --no-build-isolation --no-deps -v -w dist_raw
-            $PYBIN -m auditwheel repair dist_raw/*-$PY-*.whl -w wheelhouse
-            rm -rf build
-          done
-          ls -l wheelhouse
+          docker run --rm -v "$PWD":/src -w /src -e PYPI_TAGS=1 \
+            ghcr.io/sanji78/stefano-ntgcalls/muslinux-${{ matrix.arch.name }}:latest \
+            bash -euxo pipefail -c '
+              git config --global --add safe.directory "*"
+              for PY in cp313-cp313 cp314-cp314; do
+                PYBIN=/opt/python/$PY/bin/python
+                $PYBIN -m pip install -U pip setuptools wheel cmake ninja auditwheel
+                export PATH="$(dirname $PYBIN):/opt/clang/bin:$PATH"
+                $PYBIN -m pip wheel . --no-build-isolation --no-deps -v -w dist_raw
+                $PYBIN -m auditwheel repair dist_raw/*-$PY-*.whl -w wheelhouse
+                rm -rf build
+              done
+              ls -l wheelhouse'
+          sudo chown -R "$(id -u):$(id -g)" wheelhouse
       - uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.arch.name }}
@@ -95,7 +94,6 @@ jobs:
           - { name: arm64,  runner: ubuntu-24.04-arm }
         py: ['3.13', '3.14']
     runs-on: ${{ matrix.arch.runner }}
-    container: python:${{ matrix.py }}-alpine
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -103,8 +101,9 @@ jobs:
           path: wheelhouse
       - name: Install and import on Alpine (like Home Assistant)
         run: |
-          pip install --no-index --find-links wheelhouse stefano-ntgcalls
-          python -c "import ntgcalls; print('ntgcalls OK', getattr(ntgcalls, '__version__', ''))"
+          docker run --rm -v "$PWD/wheelhouse":/w python:${{ matrix.py }}-alpine sh -euxc '
+            pip install --no-index --find-links /w stefano-ntgcalls
+            python -c "import ntgcalls; print(\"ntgcalls OK\")"'
 
   publish:
     needs: test
