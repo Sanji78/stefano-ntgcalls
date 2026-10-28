@@ -72,6 +72,12 @@ jobs:
                 PYBIN=/opt/python/$PY/bin/python
                 $PYBIN -m pip install -U pip setuptools wheel cmake ninja auditwheel
                 export PATH="$(dirname $PYBIN):/opt/clang/bin:$PATH"
+                GCC_DIR="$(dirname "$(gcc -print-libgcc-file-name)")"
+                echo "GCC_DIR=$GCC_DIR"; ls "$GCC_DIR" | head
+                export CFLAGS="--gcc-install-dir=$GCC_DIR"
+                export CXXFLAGS="--gcc-install-dir=$GCC_DIR"
+                export LDFLAGS="--gcc-install-dir=$GCC_DIR"
+                rm -rf build
                 $PYBIN -m pip wheel . --no-build-isolation --no-deps -v -w dist_raw
                 $PYBIN -m auditwheel repair dist_raw/*-$PY-*.whl -w wheelhouse
                 rm -rf build
