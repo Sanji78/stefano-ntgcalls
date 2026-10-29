@@ -1,7 +1,7 @@
 //
 // Created by Lauren on 29/03/24.
 //
-
+#include <charconv>
 #include <wrtc/interfaces/reflector_port.hpp>
 
 #include <functional>
@@ -458,8 +458,7 @@ namespace wrtc::interfaces {
             }
             auto start_position = prefix_format.size();
             auto tag_string = synthetic_hostname.substr(start_position, synthetic_hostname.size() - kSuffixFormat.size() - start_position);
-            std::stringstream tag_string_stream(tag_string);
-            tag_string_stream >> resolved_peer_tag;
+            std::from_chars(tag_string.data(), tag_string.data() + tag_string.size(), resolved_peer_tag);
             if (resolved_peer_tag == 0) {
                 RTC_LOG(LS_ERROR) << ToString() << ": Discarding SendTo request with destination " << addr.ToString() << " (could not parse peer tag)";
                 return -1;
