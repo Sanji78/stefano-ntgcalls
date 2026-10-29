@@ -3,6 +3,9 @@
 //
 #include <ntgcalls/exceptions.hpp>
 #include <ntgcalls/signaling/messages/message.hpp>
+#include <cctype>
+#include <charconv>
+#include <string>
 
 namespace ntgcalls::signaling::messages {
     Message::Type Message::type(const bytes::binary& data) {
@@ -47,9 +50,16 @@ namespace ntgcalls::signaling::messages {
     }
 
     uint32_t Message::string_to_uint32(std::string const& string) {
-        std::stringstream string_stream(string);
+        const char* first = string.data();
+        const char* last = first + string.size();
+        while (first != last && std::isspace(static_cast<unsigned char>(*first))) {
+            ++first;
+        }
         uint32_t value = 0;
-        string_stream >> value;
+        const auto result = std::from_chars(first, last, value);
+        if (result.ec != std::errc()) {
+            return 0;
+        }
         return value;
     }
 } // ntgcalls::signaling::messages
