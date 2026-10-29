@@ -115,7 +115,7 @@ jobs:
           apk add --no-cache binutils >/dev/null
           SO=$(ls /usr/local/lib/python3.*/site-packages/ntgcalls*.so)
           nm -D --undefined-only "$SO" | awk '$1=="U" {print $2}' | sed 's/@.*//' | sort -u > /tmp/need
-          { nm -D /lib/ld-musl-*.so.1 | awk '$2 ~ /[TWDBVRi]/ {print $3}' | sed 's/@.*//
+          { nm -D /lib/ld-musl-*.so.1 | awk '$2 ~ /[TWDBVRi]/ {print $3}' | sed 's/@.*//'
             for l in $(ldd "$SO" 2>/dev/null | awk '/=>/ {print $3}'); do
               nm -D "$l" 2>/dev/null | awk '$2 ~ /[TWDBVRi]/ {print $3}' | sed 's/@.*//'
             done; } | sort -u > /tmp/have
