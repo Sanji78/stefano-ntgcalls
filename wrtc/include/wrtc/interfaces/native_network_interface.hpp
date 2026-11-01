@@ -10,6 +10,7 @@
 #include <p2p/client/basic_port_allocator.h>
 #include <pc/dtls_srtp_transport.h>
 #include <pc/sdp_payload_type_suggester.h>
+#include <rtc_base/network.h>
 #include <rtc_base/rtc_certificate.h>
 #include <wrtc/interfaces/network_interface.hpp>
 #include <wrtc/interfaces/sctp_data_channel_provider_interface_impl.hpp>
@@ -29,6 +30,7 @@ namespace wrtc::interfaces {
             std::string level_assymetry_allowed;
         };
 
+        std::unique_ptr<webrtc::NetworkManager> own_network_manager_;
         std::unique_ptr<webrtc::BasicPortAllocator> port_allocator_;
         webrtc::scoped_refptr<webrtc::RTCCertificate> local_certificate_;
         std::unique_ptr<webrtc::AsyncDnsResolverFactoryInterface> async_resolver_factory_;
